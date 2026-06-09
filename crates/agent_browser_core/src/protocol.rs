@@ -54,6 +54,9 @@ pub fn handle_command(session: &mut BrowserSession, command: ProtocolCommand) ->
             Ok(params) => response_from_result(id, session.click(params.link_id)),
             Err(error) => error_response(id, error),
         },
+        "back" => response_from_result(id, session.back()),
+        "forward" => response_from_result(id, session.forward()),
+        "reload" => response_from_result(id, session.reload()),
         "history" => success_response(id, json!({ "entries": session.history() })),
         "shutdown" => success_response(id, json!({ "shutdown": true })),
         other => error_response(
@@ -111,6 +114,8 @@ fn browser_error(error: BrowserError) -> ProtocolError {
         BrowserError::Fetch(_) => "fetch_error",
         BrowserError::NoDocumentOpen => "no_document_open",
         BrowserError::LinkNotFound(_) => "link_not_found",
+        BrowserError::CannotGoBack => "cannot_go_back",
+        BrowserError::CannotGoForward => "cannot_go_forward",
     };
 
     ProtocolError {
@@ -207,6 +212,24 @@ mod tests {
             }
             ProtocolResponse::Error { .. } => panic!("expected success"),
         }
+
+        let back = handle_command(
+            &mut session,
+            parse_command(r#"{"id":"back","method":"back"}"#).unwrap(),
+        );
+        assert!(matches!(back, ProtocolResponse::Success { .. }));
+
+        let forward = handle_command(
+            &mut session,
+            parse_command(r#"{"id":"forward","method":"forward"}"#).unwrap(),
+        );
+        assert!(matches!(forward, ProtocolResponse::Success { .. }));
+
+        let reload = handle_command(
+            &mut session,
+            parse_command(r#"{"id":"reload","method":"reload"}"#).unwrap(),
+        );
+        assert!(matches!(reload, ProtocolResponse::Success { .. }));
 
         let shutdown = handle_command(
             &mut session,

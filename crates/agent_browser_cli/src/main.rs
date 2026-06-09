@@ -173,8 +173,11 @@ mod tests {
             "{{\"id\":\"1\",\"method\":\"open\",\"params\":{{\"url\":{}}}}}\n\
              {{\"id\":\"2\",\"method\":\"snapshot\"}}\n\
              {{\"id\":\"3\",\"method\":\"click\",\"params\":{{\"link_id\":0}}}}\n\
-             {{\"id\":\"4\",\"method\":\"history\"}}\n\
-             {{\"id\":\"5\",\"method\":\"shutdown\"}}\n",
+             {{\"id\":\"4\",\"method\":\"back\"}}\n\
+             {{\"id\":\"5\",\"method\":\"forward\"}}\n\
+             {{\"id\":\"6\",\"method\":\"reload\"}}\n\
+             {{\"id\":\"7\",\"method\":\"history\"}}\n\
+             {{\"id\":\"8\",\"method\":\"shutdown\"}}\n",
             serde_json::to_string(&fixture).unwrap()
         );
         let mut output = Vec::new();
@@ -188,13 +191,13 @@ mod tests {
             .map(|line| serde_json::from_str::<Value>(line).unwrap())
             .collect::<Vec<_>>();
 
-        assert_eq!(responses.len(), 5);
+        assert_eq!(responses.len(), 8);
         for (index, response) in responses.iter().enumerate() {
             let expected_id = (index + 1).to_string();
             assert_eq!(response["id"].as_str(), Some(expected_id.as_str()));
             assert_eq!(response["ok"], true);
         }
-        assert_eq!(responses[4]["result"]["shutdown"], true);
+        assert_eq!(responses[7]["result"]["shutdown"], true);
     }
 
     #[test]

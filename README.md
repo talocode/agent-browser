@@ -41,8 +41,11 @@ Each input line is one command. Each output line is one response with the same `
 {"id":"1","method":"open","params":{"url":"fixtures/example.html"}}
 {"id":"2","method":"snapshot"}
 {"id":"3","method":"click","params":{"link_id":0}}
-{"id":"4","method":"history"}
-{"id":"5","method":"shutdown"}
+{"id":"4","method":"back"}
+{"id":"5","method":"forward"}
+{"id":"6","method":"reload"}
+{"id":"7","method":"history"}
+{"id":"8","method":"shutdown"}
 ```
 
 Successful responses use this shape:
@@ -70,4 +73,4 @@ The next useful milestones are:
 1. Add `https://` with `rustls`.
 2. Replace the flat text scanner with a real DOM tree.
 3. Add forms, inputs, and semantic accessibility snapshots.
-4. Add a deterministic action model: type, select, submit, back, reload.
+4. Add a deterministic action model: type, select, submit.

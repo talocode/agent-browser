@@ -8,6 +8,8 @@ pub enum BrowserError {
     Fetch(net::FetchError),
     NoDocumentOpen,
     LinkNotFound(usize),
+    CannotGoBack,
+    CannotGoForward,
 }
 
 impl Display for BrowserError {
@@ -16,6 +18,8 @@ impl Display for BrowserError {
             Self::Fetch(error) => write!(f, "{error}"),
             Self::NoDocumentOpen => write!(f, "no document is open"),
             Self::LinkNotFound(id) => write!(f, "link not found: {id}"),
+            Self::CannotGoBack => write!(f, "cannot go back"),
+            Self::CannotGoForward => write!(f, "cannot go forward"),
         }
     }
 }
@@ -32,6 +36,7 @@ impl From<net::FetchError> for BrowserError {
 pub struct BrowserSession {
     current: Option<Document>,
     history: Vec<String>,
+    current_index: Option<usize>,
 }
 
 impl BrowserSession {
@@ -40,9 +45,12 @@ impl BrowserSession {
     }
 
     pub fn open(&mut self, url: &str) -> Result<Snapshot, BrowserError> {
-        let body = net::fetch(url)?;
-        let doc = html::parse_document(url, &body);
+        let doc = load_document(url)?;
+        if let Some(index) = self.current_index {
+            self.history.truncate(index + 1);
+        }
         self.history.push(url.to_string());
+        self.current_index = Some(self.history.len() - 1);
         let snapshot = doc.snapshot();
         self.current = Some(doc);
         Ok(snapshot)
@@ -66,9 +74,46 @@ impl BrowserSession {
             .ok_or(BrowserError::NoDocumentOpen)
     }
 
+    pub fn back(&mut self) -> Result<Snapshot, BrowserError> {
+        let index = self.current_index.ok_or(BrowserError::NoDocumentOpen)?;
+        if index == 0 {
+            return Err(BrowserError::CannotGoBack);
+        }
+
+        self.navigate_to_history_index(index - 1)
+    }
+
+    pub fn forward(&mut self) -> Result<Snapshot, BrowserError> {
+        let index = self.current_index.ok_or(BrowserError::NoDocumentOpen)?;
+        if index + 1 >= self.history.len() {
+            return Err(BrowserError::CannotGoForward);
+        }
+
+        self.navigate_to_history_index(index + 1)
+    }
+
+    pub fn reload(&mut self) -> Result<Snapshot, BrowserError> {
+        let index = self.current_index.ok_or(BrowserError::NoDocumentOpen)?;
+        self.navigate_to_history_index(index)
+    }
+
     pub fn history(&self) -> &[String] {
         &self.history
     }
+
+    fn navigate_to_history_index(&mut self, index: usize) -> Result<Snapshot, BrowserError> {
+        let url = self.history[index].clone();
+        let doc = load_document(&url)?;
+        self.current_index = Some(index);
+        let snapshot = doc.snapshot();
+        self.current = Some(doc);
+        Ok(snapshot)
+    }
+}
+
+fn load_document(url: &str) -> Result<Document, BrowserError> {
+    let body = net::fetch(url)?;
+    Ok(html::parse_document(url, &body))
 }
 
 #[cfg(test)]
@@ -93,5 +138,33 @@ mod tests {
         assert_eq!(session.history().len(), 2);
         assert_eq!(session.history()[0], fixture);
         assert_eq!(session.history()[1].as_str(), first.links[0].href.as_str());
+    }
+
+    #[test]
+    fn back_forward_reload_and_history_truncation_are_consistent() {
+        let root = env!("CARGO_MANIFEST_DIR");
+        let first_url = format!("{root}/../../fixtures/example.html");
+        let second_url = format!("{root}/../../fixtures/docs.html");
+        let mut session = BrowserSession::new();
+
+        session.open(&first_url).expect("first fixture should open");
+        session
+            .open(&second_url)
+            .expect("second fixture should open");
+
+        let back = session.back().expect("back should navigate");
+        assert_eq!(back.title.as_deref(), Some("Agent Browser Fixture"));
+
+        let forward = session.forward().expect("forward should navigate");
+        assert_eq!(forward.title.as_deref(), Some("Agent Browser Docs"));
+
+        let reload = session.reload().expect("reload should keep current page");
+        assert_eq!(reload.title.as_deref(), Some("Agent Browser Docs"));
+        assert_eq!(session.history().len(), 2);
+
+        session.back().expect("back should navigate again");
+        let new_branch = session.open(&second_url).expect("new branch should open");
+        assert_eq!(new_branch.title.as_deref(), Some("Agent Browser Docs"));
+        assert_eq!(session.history().len(), 2);
     }
 }
