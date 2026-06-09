@@ -1,0 +1,13 @@
+[package]
+name = "agent_browser"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "agent-browser"
+path = "src/main.rs"
+
+[dependencies]
+agent_browser_core = { path = "../agent_browser_core" }
+serde_json = "1"

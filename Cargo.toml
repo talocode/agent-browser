@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "crates/agent_browser_core",
+    "crates/agent_browser_cli",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+version = "0.1.0"
