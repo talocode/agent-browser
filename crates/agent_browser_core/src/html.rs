@@ -173,7 +173,7 @@ fn parse_attr_value(rest: &mut &str) -> String {
     }
 
     let end = rest
-        .find(|ch: char| ch.is_whitespace() || ch == '/')
+        .find(|ch: char| ch.is_whitespace() || ch == '>')
         .unwrap_or(rest.len());
     let value = rest[..end].to_string();
     *rest = &rest[end..];
@@ -229,21 +229,44 @@ fn resolve_url(base: &str, href: &str) -> String {
     }
 
     if href.starts_with("//") {
-        return format!("http:{href}");
+        let scheme = base
+            .split_once("://")
+            .map(|(scheme, _)| scheme)
+            .unwrap_or("http");
+        return format!("{scheme}:{href}");
     }
 
     if href.starts_with('/') {
         if let Some((scheme, rest)) = base.split_once("://") {
-            let host = rest.split('/').next().unwrap_or(rest);
+            let host = rest.split(['/', '?', '#']).next().unwrap_or(rest);
             return format!("{scheme}://{host}{href}");
         }
     }
 
-    if let Some(last_slash) = base.rfind('/') {
+    if let Some((scheme, rest)) = base.split_once("://") {
+        let (host, path) = split_host_path(rest);
+        let directory = path
+            .rfind('/')
+            .map(|last_slash| &path[..last_slash + 1])
+            .unwrap_or("/");
+        return format!("{scheme}://{host}{directory}{href}");
+    }
+
+    if let Some(last_slash) = base.rfind(['/', '\\']) {
         return format!("{}{}", &base[..last_slash + 1], href);
     }
 
     href.to_string()
+}
+
+fn split_host_path(rest: &str) -> (&str, &str) {
+    let host_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let host = &rest[..host_end];
+    let path = match rest.as_bytes().get(host_end) {
+        Some(b'/') => &rest[host_end..],
+        _ => "/",
+    };
+    (host, path)
 }
 
 #[cfg(test)]
@@ -261,5 +284,26 @@ mod tests {
         assert_eq!(doc.text, "Hello & welcome Next page");
         assert_eq!(doc.links[0].text, "Next page");
         assert_eq!(doc.links[0].href, "http://example.test/next");
+    }
+
+    #[test]
+    fn resolves_relative_links_against_http_origin_without_path() {
+        let doc = parse_document(
+            "http://example.test",
+            r#"<a href="about">About</a><a href="?q=1">Query</a>"#,
+        );
+
+        assert_eq!(doc.links[0].href, "http://example.test/about");
+        assert_eq!(doc.links[1].href, "http://example.test/?q=1");
+    }
+
+    #[test]
+    fn preserves_slashes_in_unquoted_href_values() {
+        let doc = parse_document(
+            "http://example.test",
+            r#"<a href=http://other.test/docs>Docs</a>"#,
+        );
+
+        assert_eq!(doc.links[0].href, "http://other.test/docs");
     }
 }
