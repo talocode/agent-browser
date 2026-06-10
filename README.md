@@ -152,9 +152,9 @@ agent-browser check https://example.com --screenshot-out ./deploy.png --vision -
 
 See [docs/CHECKS.md](docs/CHECKS.md) for the pass/warn/fail model.
 
-## GitHub Action
+## Use as GitHub Action
 
-Run deploy-friendly smoke checks in any repo:
+Run deploy-friendly smoke checks in any external repository:
 
 ```yaml
 - uses: talocode/agent-browser@v0
@@ -173,7 +173,13 @@ Pin an immutable release when needed:
     url: https://example.com
 ```
 
-See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md), [docs/RELEASE.md](docs/RELEASE.md), and [examples/github-action/](examples/github-action/).
+External verification passed from [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056) using `talocode/agent-browser@v0`.
+
+Copy a full external verification workflow from [docs/examples/external-verification.md](docs/examples/external-verification.md) or [examples/github-action/external-smoke.yml](examples/github-action/external-smoke.yml).
+
+For Codra Deploy post-deploy checks, see [docs/CODRA_DEPLOY_INTEGRATION.md](docs/CODRA_DEPLOY_INTEGRATION.md).
+
+See also [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md), [docs/RELEASE.md](docs/RELEASE.md), and [examples/github-action/](examples/github-action/).
 
 ## Roadmap
 

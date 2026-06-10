@@ -2,6 +2,14 @@
 
 Agent Browser ships a composite GitHub Action for deploy-friendly smoke checks in CI.
 
+## External verification
+
+External verification **passed** on 2026-06-10 from a separate repository:
+
+- Scratch repo: [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test)
+- Workflow: [agent-browser-smoke.yml](https://github.com/talocode/agent-browser-action-test/blob/main/.github/workflows/agent-browser-smoke.yml)
+- Successful run: [actions/runs/27259693056](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056)
+
 ## Recommended usage
 
 For external repos, pin the moving early-adopter tag:
@@ -144,7 +152,14 @@ This gives Codra Deploy a simple browser-based safety gate without credential au
 
 ## Examples
 
+- [external-smoke.yml](../examples/github-action/external-smoke.yml) — real external usage with `@v0`
+- [external-verification.md](examples/external-verification.md) — copy-paste workflow for any repo
+- [codra-deploy-post-deploy.yml](../examples/github-action/codra-deploy-post-deploy.yml) — post-deploy smoke check
 - [basic.yml](../examples/github-action/basic.yml)
 - [with-screenshot.yml](../examples/github-action/with-screenshot.yml)
 - [with-vision.yml](../examples/github-action/with-vision.yml)
 - [codra-deploy-smoke.yml](../examples/github-action/codra-deploy-smoke.yml)
+
+## Codra Deploy
+
+See [CODRA_DEPLOY_INTEGRATION.md](CODRA_DEPLOY_INTEGRATION.md).

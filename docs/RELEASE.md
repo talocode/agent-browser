@@ -36,6 +36,13 @@ git push origin v0 --force
 
 ## Post-release verification
 
+External verification **passed** on 2026-06-10:
+
+- Repo: [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test)
+- Workflow run: [actions/runs/27259693056](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056)
+- Action: `talocode/agent-browser@v0`
+- Artifacts: screenshot + JSON report uploaded
+
 Verify the external usage snippet works from another repo or a scratch workflow:
 
 ```yaml

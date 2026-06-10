@@ -1,0 +1,29 @@
+name: Codra Deploy post-deploy smoke check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy application
+        id: deploy
+        run: |
+          # Replace with your real Codra Deploy step.
+          # This placeholder writes DEPLOY_URL for the smoke check below.
+          echo "url=https://app.example.com" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Verify deployed frontend
+        uses: talocode/agent-browser@v0
+        with:
+          url: ${{ steps.deploy.outputs.url }}
+          screenshot-out: deploy-smoke.png
+          vision: "true"
+          fail-on-console-errors: "true"
+          fail-on-network-errors: "true"
+          fail-on-blank: "true"
+          upload-artifact: "true"
