@@ -66,7 +66,7 @@ Vision is optional. If `vision` is `true` and the Python module is missing, the 
 
 Agent Browser is intended to integrate with the Talocode ecosystem:
 
-- **Codra CLI**: frontend checks, page inspection, and regression validation during coding workflows
+- **Codra CLI**: `codra browser check` alias for frontend smoke checks during coding workflows
 - **Codra Action**: automated browser checks in CI for pull requests
 - **Codra Deploy**: post-deploy smoke checks against public deployment URLs
 - **LaunchPix**: landing page capture and analysis

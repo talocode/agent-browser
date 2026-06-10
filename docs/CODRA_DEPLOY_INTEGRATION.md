@@ -93,6 +93,30 @@ Agent Browser keeps deploy checks safe by default:
 - no private-network scraping by default
 - no secret logging in network output
 
+## Codra CLI alias
+
+Codra exposes the same smoke check through a developer-friendly alias:
+
+```bash
+codra browser check https://your-app.example.com
+codra browser check https://your-app.example.com --screenshot-out check.png --vision
+codra browser check https://your-app.example.com --json --allow-warnings
+```
+
+`codra browser check` shells out to `agent-browser --json check <url>` and maps pass/warn/fail to exit codes. It shares the same verifier as `codra deploy verify`, with Codra-specific presentation:
+
+| Command | Use when |
+| --- | --- |
+| `codra browser check` | ad-hoc checks during development |
+| `codra deploy verify` | post-deploy verification in deployment workflows |
+
+Codra-only flags:
+
+- `--allow-warnings` — exit 0 when Agent Browser reports `warn`
+- `--agent-browser-bin <path>` — override the `agent-browser` binary path
+
+Requires `agent-browser` on `PATH` (`npm install -g @talocode/agent-browser`). For CI without Codra CLI, use `talocode/agent-browser@v0`.
+
 ## Related docs
 
 - [GITHUB_ACTION.md](GITHUB_ACTION.md)
