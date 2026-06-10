@@ -8,6 +8,16 @@ import { navigateToUrl } from "../tools/navigate.js";
 import { networkForUrl } from "../tools/network.js";
 import { screenshotUrl } from "../tools/screenshot.js";
 import { snapshotUrl } from "../tools/snapshot.js";
+import { handleBrowserCheck } from "./browser-check.js";
+
+export const MCP_TOOL_NAMES = [
+  "browser_navigate",
+  "browser_snapshot",
+  "browser_screenshot",
+  "browser_console",
+  "browser_network",
+  "browser_check",
+] as const;
 
 const MAX_BASE64_SCREENSHOT_BYTES = 512 * 1024;
 
@@ -132,6 +142,40 @@ export async function startMcpServer(): Promise<void> {
         };
       } catch (error) {
         const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Network capture failed";
+        return toolError(message);
+      }
+    },
+  );
+
+  server.tool(
+    "browser_check",
+    "Run a deploy-friendly smoke check against a URL",
+    {
+      url: z.string().url(),
+      screenshotOut: z.string().optional(),
+      vision: z.boolean().optional().default(false),
+      json: z.boolean().optional().default(true),
+      force: z.boolean().optional().default(false),
+    },
+    async ({ url, screenshotOut, vision, force }) => {
+      try {
+        const response = await handleBrowserCheck(provider, {
+          url,
+          screenshotOut,
+          vision,
+          json: true,
+          force,
+        });
+        return {
+          content: [{ type: "text", text: JSON.stringify(response) }],
+        };
+      } catch (error) {
+        const message =
+          error instanceof UnsafeUrlError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Smoke check failed";
         return toolError(message);
       }
     },
