@@ -64,6 +64,8 @@ export AGENT_BROWSER_ALLOW_LOCALHOST=1
 
 ```bash
 agent-browser --help
+agent-browser check https://example.com
+agent-browser check https://example.com --screenshot-out ./deploy.png --vision --json
 agent-browser navigate https://example.com
 agent-browser snapshot https://example.com
 agent-browser screenshot https://example.com --out ./example.png
@@ -135,6 +137,17 @@ agent-browser-vision diff ./before.png ./after.png --out ./diff.png --json
 The vision module can detect blank or blurry screenshots, compare before/after captures, save diff images, and flag major layout shifts.
 
 See [docs/VISION.md](docs/VISION.md) for details.
+
+## Smoke checks
+
+Deploy-friendly preset for agents and Codra Deploy:
+
+```bash
+agent-browser check https://example.com
+agent-browser check https://example.com --screenshot-out ./deploy.png --vision --json
+```
+
+See [docs/CHECKS.md](docs/CHECKS.md) for the pass/warn/fail model.
 
 ## Roadmap
 
