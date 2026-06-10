@@ -1,0 +1,26 @@
+name: Codra Deploy smoke check
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployed-url:
+        description: Public deployed URL to verify
+        required: true
+        default: https://example.com
+
+jobs:
+  deploy-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify deployed frontend
+        uses: talocode/agent-browser@v0
+        with:
+          url: ${{ inputs.deployed-url }}
+          screenshot-out: deploy-smoke.png
+          fail-on-console-errors: "true"
+          fail-on-network-errors: "true"
+          fail-on-blank: "true"
+          vision: "true"
+          upload-artifact: "true"

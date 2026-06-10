@@ -2,7 +2,46 @@
 
 Agent Browser ships a composite GitHub Action for deploy-friendly smoke checks in CI.
 
-## Usage
+## Recommended usage
+
+For external repos, pin the moving early-adopter tag:
+
+```yaml
+- uses: talocode/agent-browser@v0
+  with:
+    url: https://example.com
+```
+
+For production CI that should not move unexpectedly, pin an immutable semantic tag:
+
+```yaml
+- uses: talocode/agent-browser@v0.1.0
+  with:
+    url: https://example.com
+```
+
+## Versioning
+
+| Tag | Type | Use when |
+| --- | --- | --- |
+| `v0` | moving | early adopters who want the latest action behavior |
+| `v0.1.0`, `v0.2.0` | immutable | production workflows that need a pinned action version |
+| `main` | development | Agent Browser contributors only |
+
+### Updating the `v0` moving tag
+
+Maintainers update `v0` after a validated release:
+
+```bash
+git tag -f v0 <release-commit>
+git push origin v0 --force
+```
+
+`v0` should always point to the latest compatible early-action release commit, usually the same commit as the newest `v0.x.y` tag.
+
+See [RELEASE.md](RELEASE.md) for the full release checklist.
+
+## Basic workflow
 
 ```yaml
 name: Browser smoke check
@@ -17,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: talocode/agent-browser@main
+      - uses: talocode/agent-browser@v0
         with:
           url: https://example.com
 ```
@@ -66,13 +105,46 @@ The JSON report contains the normalized smoke check result plus CI decision meta
 
 Vision is optional. Normal browser checks do not require Python or OpenCV.
 
-To enable vision in CI:
-
 ```yaml
-- uses: talocode/agent-browser@main
+- uses: talocode/agent-browser@v0
   with:
     url: https://example.com
     vision: "true"
 ```
 
-Install the Python vision module in a prior workflow step if you want visual inspection to run instead of warn.
+Install the Python vision module in a prior workflow step if you want visual inspection to run instead of warn. See [VISION.md](VISION.md).
+
+## Codra Deploy usage
+
+After a deployment completes, run Agent Browser against the deployed public URL to catch broken frontend releases early.
+
+Typical post-deploy flow:
+
+1. Codra Deploy finishes a release to a public URL.
+2. A workflow step runs `talocode/agent-browser@v0` against that URL.
+3. The action fails on console errors, failed network requests, or blank pages when vision is enabled.
+4. Screenshots and JSON reports are uploaded for agent inspection.
+
+Example:
+
+```yaml
+- name: Verify deployed frontend
+  uses: talocode/agent-browser@v0
+  with:
+    url: https://app.example.com
+    screenshot-out: deploy-smoke.png
+    fail-on-console-errors: "true"
+    fail-on-network-errors: "true"
+    fail-on-blank: "true"
+    vision: "true"
+    upload-artifact: "true"
+```
+
+This gives Codra Deploy a simple browser-based safety gate without credential automation or private-network scraping.
+
+## Examples
+
+- [basic.yml](../examples/github-action/basic.yml)
+- [with-screenshot.yml](../examples/github-action/with-screenshot.yml)
+- [with-vision.yml](../examples/github-action/with-vision.yml)
+- [codra-deploy-smoke.yml](../examples/github-action/codra-deploy-smoke.yml)

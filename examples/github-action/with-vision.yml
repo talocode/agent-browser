@@ -1,9 +1,7 @@
-name: Browser smoke check
+name: Agent Browser check with optional vision
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   browser-check:
@@ -11,13 +9,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Agent Browser smoke check
+      - name: Install optional vision module
+        run: |
+          cd python/agent-browser-vision
+          python3 -m pip install -e ".[dev]"
+        shell: bash
+
+      - name: Smoke check with vision inspect
         uses: talocode/agent-browser@v0
         with:
           url: https://example.com
           screenshot-out: agent-browser-screenshot.png
-          vision: "false"
-          fail-on-console-errors: "true"
-          fail-on-network-errors: "true"
+          vision: "true"
           fail-on-blank: "true"
           upload-artifact: "true"

@@ -1,9 +1,7 @@
-name: Browser smoke check
+name: Agent Browser check with screenshot
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   browser-check:
@@ -11,13 +9,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Agent Browser smoke check
+      - name: Smoke check and save screenshot
         uses: talocode/agent-browser@v0
         with:
           url: https://example.com
           screenshot-out: agent-browser-screenshot.png
-          vision: "false"
-          fail-on-console-errors: "true"
-          fail-on-network-errors: "true"
-          fail-on-blank: "true"
           upload-artifact: "true"

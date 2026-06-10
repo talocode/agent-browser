@@ -1,0 +1,34 @@
+name: Action smoke test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "action.yml"
+      - "src/action.ts"
+      - "src/action/**"
+      - "src/tools/check.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/action-smoke.yml"
+  pull_request:
+    paths:
+      - "action.yml"
+      - "src/action.ts"
+      - "src/action/**"
+      - "src/tools/check.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/action-smoke.yml"
+
+jobs:
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run local Agent Browser action
+        uses: ./
+        with:
+          url: https://example.com
+          upload-artifact: "false"
