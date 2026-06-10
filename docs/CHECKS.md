@@ -70,3 +70,35 @@ agent-browser check https://deployed-app.example --screenshot-out ./deploy.png -
 ```
 
 That gives deploy agents a single pass/warn/fail result with page content, console/network signals, and optional visual inspection.
+
+## MCP tool
+
+The same smoke check is exposed as `browser_check` through `agent-browser mcp`.
+
+Input:
+
+```json
+{
+  "url": "https://example.com",
+  "screenshotOut": "optional/path.png",
+  "vision": false,
+  "json": true,
+  "force": false
+}
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "result": {
+    "protocolVersion": "1.0",
+    "status": "pass",
+    "summary": "Smoke check passed.",
+    "checks": []
+  }
+}
+```
+
+Vision is optional for MCP as well. Missing Python/OpenCV produces a warning check item, not a fatal MCP error.

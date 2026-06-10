@@ -42,8 +42,25 @@ Exposed tools:
 - `browser_screenshot`
 - `browser_console`
 - `browser_network`
+- `browser_check`
 
 MCP tools reuse the same provider and safety layers as the CLI.
+
+### `browser_check`
+
+Runs the smoke check preset and returns a normalized protocol result:
+
+```json
+{
+  "url": "https://example.com",
+  "screenshotOut": "optional/path.png",
+  "vision": false,
+  "json": true,
+  "force": false
+}
+```
+
+Vision is optional. If `vision` is `true` and the Python module is missing, the tool returns a warning in the check result rather than failing the MCP call.
 
 ## Future integrations
 

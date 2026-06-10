@@ -101,8 +101,11 @@ Available tools:
 - `browser_screenshot`
 - `browser_console`
 - `browser_network`
+- `browser_check`
 
 Each tool validates URL safety and returns structured JSON results.
+
+`browser_check` runs the deploy-friendly smoke check preset and returns a normalized pass/warn/fail protocol result. Optional `vision` uses the Python module when available.
 
 ## Safety model
 
