@@ -121,6 +121,13 @@ Agent Browser also includes an optional Python package for screenshot visual ins
 ```bash
 cd python/agent-browser-vision
 pip install -e ".[dev]"
+agent-browser vision inspect ./screenshot.png --json
+agent-browser vision diff ./before.png ./after.png --out ./diff.png --json
+```
+
+You can also call the Python CLI directly:
+
+```bash
 agent-browser-vision inspect ./screenshot.png --json
 agent-browser-vision diff ./before.png ./after.png --out ./diff.png --json
 ```

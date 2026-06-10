@@ -25,9 +25,30 @@ Screenshot comparison and blur/blank detection are useful, but they are not requ
 
 ## Commands
 
+### TypeScript bridge
+
+The TypeScript CLI can call the Python module when it is installed:
+
+```bash
+agent-browser vision inspect ./screenshot.png
+agent-browser vision inspect ./screenshot.png --json
+agent-browser vision diff ./before.png ./after.png --out ./diff.png
+agent-browser vision diff ./before.png ./after.png --out ./diff.png --json --force
+```
+
+If Python/OpenCV is missing, only `agent-browser vision ...` commands fail with install guidance. Normal browser commands continue to work.
+
+### Python CLI
+
 ```bash
 agent-browser-vision inspect ./screenshot.png --json
 agent-browser-vision diff ./before.png ./after.png --out ./diff.png --json
+```
+
+Install the optional module with:
+
+```bash
+cd python/agent-browser-vision && pip install -e ".[dev]"
 ```
 
 ## Codra Deploy use case
