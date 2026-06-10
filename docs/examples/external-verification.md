@@ -1,5 +1,14 @@
 # External Action Verification
 
+**External verification passed** on 2026-06-10 using [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test).
+
+- Workflow: [Agent Browser External Smoke](https://github.com/talocode/agent-browser-action-test/blob/main/.github/workflows/agent-browser-smoke.yml)
+- Successful run: [actions/runs/27259693056](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056)
+- Action resolved: `talocode/agent-browser@v0`
+- Result: `Smoke check passed.`
+- Artifacts uploaded: `agent-browser-screenshot.png`, `agent-browser-check-report.json`
+- Vision/OpenCV: not required (`vision: false`)
+
 Use this workflow in any external repository to verify that Agent Browser resolves and runs from the published `v0` tag.
 
 Copy the workflow below into `.github/workflows/agent-browser-smoke.yml` in your repo, then run it manually with **workflow_dispatch**.

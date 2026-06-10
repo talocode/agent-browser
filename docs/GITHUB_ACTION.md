@@ -2,6 +2,14 @@
 
 Agent Browser ships a composite GitHub Action for deploy-friendly smoke checks in CI.
 
+## External verification
+
+External verification **passed** on 2026-06-10 from a separate repository:
+
+- Scratch repo: [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test)
+- Workflow: [agent-browser-smoke.yml](https://github.com/talocode/agent-browser-action-test/blob/main/.github/workflows/agent-browser-smoke.yml)
+- Successful run: [actions/runs/27259693056](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056)
+
 ## Recommended usage
 
 For external repos, pin the moving early-adopter tag:

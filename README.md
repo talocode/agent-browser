@@ -173,6 +173,8 @@ Pin an immutable release when needed:
     url: https://example.com
 ```
 
+External verification passed from [talocode/agent-browser-action-test](https://github.com/talocode/agent-browser-action-test/actions/runs/27259693056) using `talocode/agent-browser@v0`.
+
 Copy a full external verification workflow from [docs/examples/external-verification.md](docs/examples/external-verification.md) or [examples/github-action/external-smoke.yml](examples/github-action/external-smoke.yml).
 
 For Codra Deploy post-deploy checks, see [docs/CODRA_DEPLOY_INTEGRATION.md](docs/CODRA_DEPLOY_INTEGRATION.md).
