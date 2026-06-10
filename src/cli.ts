@@ -6,6 +6,7 @@ import { navigateToUrl } from "./tools/navigate.js";
 import { networkForUrl } from "./tools/network.js";
 import { screenshotUrl } from "./tools/screenshot.js";
 import { snapshotUrl } from "./tools/snapshot.js";
+import { formatSmokeCheckHuman, runSmokeCheck } from "./tools/check.js";
 import {
   formatVisionDiffHuman,
   formatVisionInspectHuman,
@@ -130,6 +131,30 @@ program
   .action(async (url: string) => {
     const options = program.opts<OutputOptions>();
     await withProvider((provider) => networkForUrl(provider, url), options);
+  });
+
+program
+  .command("check")
+  .argument("<url>", "URL to smoke check")
+  .option("--screenshot-out <path>", "Save screenshot to this path")
+  .option("--force", "Overwrite existing screenshot output")
+  .option("--vision", "Run optional vision inspect when screenshot is available")
+  .description("Run a deploy-friendly smoke check against a URL")
+  .action(async (url: string, cmd: { screenshotOut?: string; force?: boolean; vision?: boolean }) => {
+    const options = program.opts<OutputOptions>();
+    await withProvider(async (provider) => {
+      const result = await runSmokeCheck(provider, url, {
+        screenshotOut: cmd.screenshotOut,
+        force: cmd.force,
+        vision: cmd.vision,
+      });
+
+      if (options.json) {
+        return { ok: true, result };
+      }
+
+      return formatSmokeCheckHuman(result);
+    }, options);
   });
 
 program

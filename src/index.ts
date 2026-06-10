@@ -7,4 +7,5 @@ export { snapshotUrl } from "./tools/snapshot.js";
 export { screenshotUrl } from "./tools/screenshot.js";
 export { consoleForUrl } from "./tools/console.js";
 export { networkForUrl } from "./tools/network.js";
+export { runSmokeCheck, formatSmokeCheckHuman, CHECK_PROTOCOL_VERSION } from "./tools/check.js";
 export { startMcpServer } from "./server/mcp.js";
