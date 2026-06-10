@@ -143,11 +143,12 @@ See [docs/VISION.md](docs/VISION.md) for details.
 
 ## Smoke checks
 
-Deploy-friendly preset for agents and Codra Deploy:
+Deploy-friendly preset for agents, Codra CLI, and Codra Deploy:
 
 ```bash
 agent-browser check https://example.com
 agent-browser check https://example.com --screenshot-out ./deploy.png --vision --json
+codra browser check https://example.com
 ```
 
 See [docs/CHECKS.md](docs/CHECKS.md) for the pass/warn/fail model.

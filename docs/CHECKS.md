@@ -61,15 +61,22 @@ When `--vision` is enabled:
 - otherwise a temporary screenshot is captured for inspection and cleaned up afterward
 - if the Python vision module is missing, the smoke check continues with a warning
 
-## Codra Deploy use case
+## Codra CLI and Codra Deploy
 
-Codra Deploy can run:
+Codra shells out to Agent Browser for smoke checks. Use the CLI alias during development:
 
 ```bash
-agent-browser check https://deployed-app.example --screenshot-out ./deploy.png --vision --json
+codra browser check https://deployed-app.example
+codra browser check https://deployed-app.example --screenshot-out ./deploy.png --vision --json
 ```
 
-That gives deploy agents a single pass/warn/fail result with page content, console/network signals, and optional visual inspection.
+Use `codra deploy verify` in deployment workflows — it invokes the same underlying `agent-browser check` command:
+
+```bash
+codra deploy verify https://deployed-app.example --screenshot-out ./deploy.png --vision --json
+```
+
+Both give agents a single pass/warn/fail result with page content, console/network signals, and optional visual inspection.
 
 ## MCP tool
 
