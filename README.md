@@ -152,6 +152,21 @@ agent-browser check https://example.com --screenshot-out ./deploy.png --vision -
 
 See [docs/CHECKS.md](docs/CHECKS.md) for the pass/warn/fail model.
 
+## GitHub Action
+
+Run deploy-friendly smoke checks in any repo:
+
+```yaml
+- uses: talocode/agent-browser@main
+  with:
+    url: https://example.com
+    screenshot-out: agent-browser-screenshot.png
+    vision: "false"
+    upload-artifact: "true"
+```
+
+See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) and [examples/github-action/browser-check.yml](examples/github-action/browser-check.yml).
+
 ## Roadmap
 
 - Deeper Codra and Codra Deploy integrations

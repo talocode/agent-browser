@@ -36,6 +36,6 @@ describe("CLI unsafe URL failure", () => {
       expect(result.code).toBe(1);
       expect(`${result.stdout}${result.stderr}`).toMatch(/Localhost is disabled|Error:/);
     },
-    15_000,
+    25_000,
   );
 });

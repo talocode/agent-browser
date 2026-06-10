@@ -17,3 +17,7 @@ __pycache__/
 .venv/
 python/**/dist/
 python/**/build/
+
+# GitHub Action generated artifacts
+agent-browser-screenshot.png
+agent-browser-check-report.json

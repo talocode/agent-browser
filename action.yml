@@ -1,0 +1,76 @@
+name: Agent Browser Check
+description: Run deploy-friendly Agent Browser smoke checks in CI
+branding:
+  icon: globe
+  color: blue
+inputs:
+  url:
+    description: Public URL to smoke check
+    required: true
+  screenshot-out:
+    description: Screenshot output path relative to the workspace
+    required: false
+    default: agent-browser-screenshot.png
+  vision:
+    description: Enable optional vision inspect on the screenshot
+    required: false
+    default: "false"
+  fail-on-console-errors:
+    description: Fail the check when console errors are present
+    required: false
+    default: "true"
+  fail-on-network-errors:
+    description: Fail the check when failed network requests are present
+    required: false
+    default: "true"
+  fail-on-blank:
+    description: Fail when vision detects a blank screenshot
+    required: false
+    default: "true"
+  upload-artifact:
+    description: Upload screenshot and JSON report as workflow artifacts
+    required: false
+    default: "true"
+outputs:
+  status:
+    description: Smoke check status (pass, warn, or fail)
+  summary:
+    description: Human-readable smoke check summary
+  report-path:
+    description: Path to the JSON report file
+  screenshot-path:
+    description: Path to the saved screenshot, if captured
+runs:
+  using: composite
+  steps:
+    - name: Install action dependencies
+      run: npm ci && npm run build
+      shell: bash
+      working-directory: ${{ github.action_path }}
+    - name: Install Chromium
+      run: npx playwright install chromium
+      shell: bash
+      working-directory: ${{ github.action_path }}
+    - name: Run browser check
+      id: browser-check
+      run: node dist/action.js
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_SCREENSHOT_OUT: ${{ inputs.screenshot-out }}
+        INPUT_VISION: ${{ inputs.vision }}
+        INPUT_FAIL_ON_CONSOLE_ERRORS: ${{ inputs.fail-on-console-errors }}
+        INPUT_FAIL_ON_NETWORK_ERRORS: ${{ inputs.fail-on-network-errors }}
+        INPUT_FAIL_ON_BLANK: ${{ inputs.fail-on-blank }}
+        INPUT_UPLOAD_ARTIFACT: ${{ inputs.upload-artifact }}
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+    - name: Upload artifacts
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-browser-check
+        path: |
+          ${{ steps.browser-check.outputs.screenshot-path }}
+          ${{ steps.browser-check.outputs.report-path }}
+        if-no-files-found: ignore
