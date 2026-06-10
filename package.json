@@ -26,6 +26,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@actions/core": "^1.11.1",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "commander": "^13.1.0",
     "playwright-core": "^1.52.0",

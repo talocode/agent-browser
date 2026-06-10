@@ -10,3 +10,5 @@ export { networkForUrl } from "./tools/network.js";
 export { runSmokeCheck, formatSmokeCheckHuman, CHECK_PROTOCOL_VERSION } from "./tools/check.js";
 export { startMcpServer, MCP_TOOL_NAMES } from "./server/mcp.js";
 export { handleBrowserCheck } from "./server/browser-check.js";
+export { evaluateActionDecision } from "./action/decisions.js";
+export { parseActionInputs, runBrowserCheckAction } from "./action.js";

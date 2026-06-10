@@ -21,4 +21,12 @@ export default defineConfig([
     sourcemap: true,
     splitting: false,
   },
+  {
+    entry: ["src/action.ts"],
+    format: ["esm"],
+    target: "node20",
+    dts: false,
+    sourcemap: true,
+    splitting: false,
+  },
 ]);
