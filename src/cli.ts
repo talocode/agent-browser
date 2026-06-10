@@ -6,6 +6,12 @@ import { navigateToUrl } from "./tools/navigate.js";
 import { networkForUrl } from "./tools/network.js";
 import { screenshotUrl } from "./tools/screenshot.js";
 import { snapshotUrl } from "./tools/snapshot.js";
+import {
+  formatVisionDiffHuman,
+  formatVisionInspectHuman,
+  visionDiff,
+  visionInspect,
+} from "./vision/python-bridge.js";
 
 interface OutputOptions {
   json?: boolean;
@@ -132,6 +138,53 @@ program
   .action(async () => {
     const { startMcpServer } = await import("./server/mcp.js");
     await startMcpServer();
+  });
+
+const vision = program
+  .command("vision")
+  .description("Optional screenshot visual inspection via Python/OpenCV");
+
+vision
+  .command("inspect")
+  .argument("<image>", "Path to screenshot image")
+  .description("Inspect a screenshot for blank or blurry renders")
+  .action(async (image: string) => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const result = await visionInspect(image, { json: options.json });
+      if (options.json) {
+        printOutput({ ok: true, result }, options);
+        return;
+      }
+      console.log(formatVisionInspectHuman(result));
+    } catch (error) {
+      printError(error, options);
+    }
+  });
+
+vision
+  .command("diff")
+  .argument("<before>", "Path to before screenshot")
+  .argument("<after>", "Path to after screenshot")
+  .option("--out <path>", "Write diff image to this path")
+  .option("--force", "Overwrite existing diff image")
+  .description("Compare two screenshots and optionally save a diff image")
+  .action(async (before: string, after: string, cmd: { out?: string; force?: boolean }) => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const result = await visionDiff(before, after, {
+        out: cmd.out,
+        force: cmd.force,
+        json: options.json,
+      });
+      if (options.json) {
+        printOutput({ ok: true, result }, options);
+        return;
+      }
+      console.log(formatVisionDiffHuman(result));
+    } catch (error) {
+      printError(error, options);
+    }
   });
 
 await program.parseAsync(process.argv);
