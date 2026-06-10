@@ -1,0 +1,21 @@
+name: External Agent Browser smoke check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify talocode/agent-browser@v0 from an external repo
+        uses: talocode/agent-browser@v0
+        with:
+          url: https://example.com
+          screenshot-out: agent-browser-screenshot.png
+          vision: "false"
+          fail-on-console-errors: "true"
+          fail-on-network-errors: "true"
+          fail-on-blank: "true"
+          upload-artifact: "true"

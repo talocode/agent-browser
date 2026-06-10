@@ -144,7 +144,14 @@ This gives Codra Deploy a simple browser-based safety gate without credential au
 
 ## Examples
 
+- [external-smoke.yml](../examples/github-action/external-smoke.yml) — real external usage with `@v0`
+- [external-verification.md](examples/external-verification.md) — copy-paste workflow for any repo
+- [codra-deploy-post-deploy.yml](../examples/github-action/codra-deploy-post-deploy.yml) — post-deploy smoke check
 - [basic.yml](../examples/github-action/basic.yml)
 - [with-screenshot.yml](../examples/github-action/with-screenshot.yml)
 - [with-vision.yml](../examples/github-action/with-vision.yml)
 - [codra-deploy-smoke.yml](../examples/github-action/codra-deploy-smoke.yml)
+
+## Codra Deploy
+
+See [CODRA_DEPLOY_INTEGRATION.md](CODRA_DEPLOY_INTEGRATION.md).
