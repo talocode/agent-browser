@@ -157,7 +157,7 @@ See [docs/CHECKS.md](docs/CHECKS.md) for the pass/warn/fail model.
 Run deploy-friendly smoke checks in any repo:
 
 ```yaml
-- uses: talocode/agent-browser@main
+- uses: talocode/agent-browser@v0
   with:
     url: https://example.com
     screenshot-out: agent-browser-screenshot.png
@@ -165,7 +165,15 @@ Run deploy-friendly smoke checks in any repo:
     upload-artifact: "true"
 ```
 
-See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) and [examples/github-action/browser-check.yml](examples/github-action/browser-check.yml).
+Pin an immutable release when needed:
+
+```yaml
+- uses: talocode/agent-browser@v0.1.0
+  with:
+    url: https://example.com
+```
+
+See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md), [docs/RELEASE.md](docs/RELEASE.md), and [examples/github-action/](examples/github-action/).
 
 ## Roadmap
 
