@@ -1,76 +1,127 @@
 # Agent Browser
 
-An experimental browser core written in Rust for software agents.
+Agent Browser is an open-source browser automation layer for AI agents. It gives coding agents, deploy agents, and research agents a safe way to inspect web pages, capture screenshots, read console and network signals, and validate web apps.
 
-This is not a Chromium wrapper. The first milestone is a small, inspectable browser stack:
+## Why it exists
 
-- fetch `http://` pages and local files
-- parse enough HTML to expose title, visible text, and links
-- return deterministic snapshots suitable for agents
-- navigate through links by stable IDs inside a session
+Modern AI agents need a browser tool that is:
 
-## Run
+- safe by default
+- easy to inspect
+- usable from CLI and MCP
+- suitable for testing, deploy validation, and page understanding
 
-```powershell
-cargo run -p agent_browser -- open http://example.com/
+Agent Browser provides that foundation without credential automation, anti-detection tooling, or private-network scraping.
+
+## Talocode ecosystem
+
+Agent Browser fits into the Talocode stack:
+
+- **Codra CLI** — the coding agent
+- **Codra Action** — GitHub automation
+- **Codra Deploy** — deployment and runtime validation
+- **Agent Browser** — browser automation and web inspection
+
+Typical uses:
+
+- AI agents test web apps
+- Codra checks frontend behavior
+- Codra Deploy validates live deployments
+- LaunchPix captures landing pages
+- TeraAI reads and understands web pages
+- Developers run browser automation through CLI and MCP
+
+## Install
+
+```bash
+npm install
+npm run build
 ```
 
-Local files work too:
+Playwright requires a Chromium binary for live browsing:
 
-```powershell
-cargo run -p agent_browser -- snapshot .\fixtures\example.html
+```bash
+npx playwright install chromium
 ```
 
-Machine-readable one-shot snapshots:
+## Development
 
-```powershell
-cargo run -p agent_browser -- --json snapshot .\fixtures\example.html
+```bash
+npm install
+npm run dev -- --help
+npm run typecheck
+npm run test
+npm run build
 ```
 
-## Agent Protocol
+Local development against localhost:
 
-Start a persistent browser session over JSON Lines on stdio:
-
-```powershell
-cargo run -p agent_browser -- serve
+```bash
+export AGENT_BROWSER_ALLOW_LOCALHOST=1
 ```
 
-Each input line is one command. Each output line is one response with the same `id`.
+## CLI
 
-```json
-{"id":"1","method":"open","params":{"url":"fixtures/example.html"}}
-{"id":"2","method":"snapshot"}
-{"id":"3","method":"click","params":{"link_id":0}}
-{"id":"4","method":"back"}
-{"id":"5","method":"forward"}
-{"id":"6","method":"reload"}
-{"id":"7","method":"history"}
-{"id":"8","method":"shutdown"}
+```bash
+agent-browser --help
+agent-browser navigate https://example.com
+agent-browser snapshot https://example.com
+agent-browser screenshot https://example.com --out ./example.png
+agent-browser console https://example.com
+agent-browser network https://example.com
+agent-browser mcp
 ```
 
-Successful responses use this shape:
+Machine-readable output:
 
-```json
-{"id":"1","ok":true,"result":{}}
+```bash
+agent-browser --json snapshot https://example.com
 ```
 
-Errors use this shape:
+Screenshot overwrite protection:
 
-```json
-{"id":"1","ok":false,"error":{"code":"link_not_found","message":"link not found: 7"}}
+```bash
+agent-browser screenshot https://example.com --out ./example.png --force
 ```
 
-## Current Limits
+## MCP usage
 
-- `https://` is intentionally not implemented yet
-- no CSS layout, JavaScript, cookies, forms, or rendering
-- HTML parsing is forgiving but minimal
+Start the MCP server:
 
-## Direction
+```bash
+agent-browser mcp
+```
 
-The next useful milestones are:
+Available tools:
 
-1. Add `https://` with `rustls`.
-2. Replace the flat text scanner with a real DOM tree.
-3. Add forms, inputs, and semantic accessibility snapshots.
-4. Add a deterministic action model: type, select, submit.
+- `browser_navigate`
+- `browser_snapshot`
+- `browser_screenshot`
+- `browser_console`
+- `browser_network`
+
+Each tool validates URL safety and returns structured JSON results.
+
+## Safety model
+
+Agent Browser blocks unsafe protocols and private network targets by default. Localhost is disabled unless `AGENT_BROWSER_ALLOW_LOCALHOST=1` is set for local development.
+
+Sensitive query parameters are redacted from network output. The project does not store secrets, automate login, bypass CAPTCHAs, or provide anti-detection behavior.
+
+See [docs/SAFETY.md](docs/SAFETY.md) for details.
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Roadmap
+
+- Deeper Codra and Codra Deploy integrations
+- Persistent sessions for multi-step agent workflows
+- Accessibility-oriented snapshots
+- CI-friendly smoke check presets
+- Optional form inspection without credential automation
+
+## License
+
+MIT
