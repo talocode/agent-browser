@@ -114,6 +114,21 @@ See [docs/SAFETY.md](docs/SAFETY.md) for details.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Optional Vision Module
+
+Agent Browser also includes an optional Python package for screenshot visual inspection. OpenCV is not required for normal TypeScript CLI or MCP usage.
+
+```bash
+cd python/agent-browser-vision
+pip install -e ".[dev]"
+agent-browser-vision inspect ./screenshot.png --json
+agent-browser-vision diff ./before.png ./after.png --out ./diff.png --json
+```
+
+The vision module can detect blank or blurry screenshots, compare before/after captures, save diff images, and flag major layout shifts.
+
+See [docs/VISION.md](docs/VISION.md) for details.
+
 ## Roadmap
 
 - Deeper Codra and Codra Deploy integrations

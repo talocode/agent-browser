@@ -8,3 +8,12 @@
 playwright-report/
 test-results/
 .DS_Store
+
+# Python vision module
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+python/**/dist/
+python/**/build/
