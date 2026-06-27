@@ -34,13 +34,15 @@ Typical uses:
 ## Install
 
 ```bash
-npm install
-npm run build
+npm install -g @talocode/agent-browser
+npx playwright install chromium
 ```
 
-Playwright requires a Chromium binary for live browsing:
+For local development from source:
 
 ```bash
+npm install
+npm run build
 npx playwright install chromium
 ```
 

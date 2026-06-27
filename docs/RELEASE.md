@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist when publishing a new Agent Browser GitHub Action version.
+Use this checklist when publishing a new Agent Browser version (npm and/or GitHub Action).
 
 ## Pre-release validation
 
@@ -76,8 +76,30 @@ When shipping a compatible action update:
 
 Do not move `v0` for breaking changes without documenting them in the release PR.
 
+## npm package (v0.2.0+)
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+npm pack --dry-run
+npm whoami
+npm publish --access public
+```
+
+After publish:
+
+```bash
+npm view @talocode/agent-browser version
+git tag -a v0.2.0 -m "Agent Browser v0.2.0"
+git push origin v0.2.0
+gh release create v0.2.0 --title "Agent Browser v0.2.0 — Persistent Sessions & Trace Reports" --notes-file docs/release/v0.2.0-release-notes.md
+```
+
+Demo materials for releases live in `docs/release/`. Terminal recording helper: `scripts/demo-v020.sh`.
+
 ## Not in scope yet
 
-- npm package publishing
-- automated GitHub Release creation
 - OpenCV bundled into the action by default
+- In-repo MP4 video rendering (use demo script + external recorder)

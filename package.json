@@ -1,6 +1,6 @@
 {
   "name": "@talocode/agent-browser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Open-source browser automation layer for AI agents",
   "license": "MIT",
   "type": "module",
