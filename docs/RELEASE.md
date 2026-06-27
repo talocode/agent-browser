@@ -16,6 +16,7 @@ Confirm:
 - URL safety defaults unchanged
 - vision remains optional (`vision=false` by default)
 - local action smoke workflow passes on `main`
+- hosted API tests pass (`tests/api.test.ts`) when shipping API changes
 
 ## Merge and tag
 

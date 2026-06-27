@@ -76,6 +76,7 @@ agent-browser network https://example.com
 agent-browser session create --name "deploy-check"
 agent-browser navigate https://example.com --session <sessionId>
 agent-browser session report <sessionId> --format markdown
+agent-browser api --host 127.0.0.1 --port 7340
 agent-browser mcp
 ```
 
@@ -206,6 +207,17 @@ agent-browser session report <sessionId> --format markdown
 ```
 
 See [docs/SESSIONS.md](docs/SESSIONS.md).
+
+## Hosted API (v0.1)
+
+Run the hosted API locally for HTTP-based browser validation. The CLI and MCP remain local-first — the hosted API is optional.
+
+```bash
+export TALOCODE_API_KEY=replace_me
+agent-browser api --host 127.0.0.1 --port 7340
+```
+
+Managed Talocode cloud is not deployed yet; v0.1 is for self-hosted/local use. See [docs/HOSTED_API.md](docs/HOSTED_API.md) and [examples/api/](examples/api/).
 
 ## Roadmap
 

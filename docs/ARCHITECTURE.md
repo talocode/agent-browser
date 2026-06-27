@@ -80,6 +80,20 @@ Runs the smoke check preset and returns a normalized protocol result:
 
 Vision is optional. If `vision` is `true` and the Python module is missing, the tool returns a warning in the check result rather than failing the MCP call.
 
+## Hosted API (v0.1)
+
+`src/api/` adds an optional HTTP server for builders who want managed browser validation infrastructure:
+
+- `server.ts` — Node HTTP server lifecycle
+- `routes.ts` — `/v1/*` endpoints
+- `auth.ts` — `Authorization: Bearer` with `TALOCODE_API_KEY`
+- `usage.ts` — local `.agent-browser/hosted-usage.json` log and optional Stacklane forwarding
+- `config.ts` — env-based configuration
+
+`agent-browser api` starts the server locally. Browser routes reuse `BrowserProvider`, `SessionManager`, `runSmokeCheck`, and the same safety layer as CLI/MCP. The open-source CLI and MCP do not require the hosted API.
+
+See [HOSTED_API.md](HOSTED_API.md).
+
 ## Future integrations
 
 Agent Browser is intended to integrate with the Talocode ecosystem:

@@ -71,3 +71,14 @@ Agent sessions (v0.2) store metadata and trace steps locally under `.agent-brows
 - closed and expired sessions cannot be reused
 
 Sessions do not add credential automation, CAPTCHA bypass, or anti-detection behavior. See [SESSIONS.md](SESSIONS.md).
+
+## Hosted API
+
+The hosted API (`agent-browser api`, `src/api/`) enforces the same URL safety rules as the CLI and MCP:
+
+- unsafe protocols blocked
+- private/loopback addresses blocked by default
+- `AGENT_BROWSER_ALLOW_LOCALHOST=1` for explicit local development
+- sensitive query parameters redacted in network evidence
+
+API authentication uses `TALOCODE_API_KEY` via Bearer token. Keys are never returned in responses or stored in usage metadata. See [HOSTED_API.md](HOSTED_API.md).

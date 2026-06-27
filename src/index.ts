@@ -26,3 +26,13 @@ export {
   type ReportFormat,
   type SessionReport,
 } from "./sessions/index.js";
+export {
+  createApiServer,
+  startApiServer,
+  formatStartupMessage,
+  loadApiConfig,
+  recordHostedUsageEvent,
+  requireAuth,
+  type ApiConfig,
+  type ApiServerOptions,
+} from "./api/index.js";

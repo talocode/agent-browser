@@ -332,6 +332,34 @@ program
   });
 
 program
+  .command("api")
+  .description("Start the hosted Agent Browser API server locally")
+  .option("--host <host>", "Bind host", process.env.AGENT_BROWSER_API_HOST ?? "127.0.0.1")
+  .option("--port <port>", "Bind port", process.env.AGENT_BROWSER_API_PORT ?? "7340")
+  .action(async (cmd: { host: string; port: string }) => {
+    const { startApiServer, formatStartupMessage } = await import("./api/index.js");
+    const port = Number(cmd.port);
+    if (!Number.isFinite(port) || port <= 0 || port >= 65536) {
+      console.error("Error: --port must be a valid TCP port.");
+      process.exit(1);
+    }
+
+    const started = await startApiServer({
+      config: { host: cmd.host, port },
+    });
+
+    console.log(formatStartupMessage(started.config));
+
+    const shutdown = async () => {
+      await started.close();
+      process.exit(0);
+    };
+
+    process.on("SIGINT", () => void shutdown());
+    process.on("SIGTERM", () => void shutdown());
+  });
+
+program
   .command("mcp")
   .description("Start the MCP server over stdio")
   .action(async () => {
