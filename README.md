@@ -71,6 +71,9 @@ agent-browser snapshot https://example.com
 agent-browser screenshot https://example.com --out ./example.png
 agent-browser console https://example.com
 agent-browser network https://example.com
+agent-browser session create --name "deploy-check"
+agent-browser navigate https://example.com --session <sessionId>
+agent-browser session report <sessionId> --format markdown
 agent-browser mcp
 ```
 
@@ -102,8 +105,15 @@ Available tools:
 - `browser_console`
 - `browser_network`
 - `browser_check`
+- `browser_session_create`
+- `browser_session_list`
+- `browser_session_close`
+- `browser_session_trace`
+- `browser_session_report`
 
-Each tool validates URL safety and returns structured JSON results.
+Each tool validates URL safety and returns structured JSON results. Existing browser tools accept optional `sessionId` for multi-step trace recording.
+
+See [docs/SESSIONS.md](docs/SESSIONS.md) for session lifecycle, trace format, and v0.2 limitations.
 
 `browser_check` runs the deploy-friendly smoke check preset and returns a normalized pass/warn/fail protocol result. Optional `vision` uses the Python module when available.
 
@@ -182,10 +192,23 @@ For Codra Deploy post-deploy checks, see [docs/CODRA_DEPLOY_INTEGRATION.md](docs
 
 See also [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md), [docs/RELEASE.md](docs/RELEASE.md), and [examples/github-action/](examples/github-action/).
 
+## Sessions & Trace (v0.2)
+
+Persistent local sessions for multi-step agent workflows with step tracing and JSON/Markdown reports:
+
+```bash
+agent-browser session create --json
+agent-browser check https://example.com --session <sessionId> --screenshot-out ./deploy.png --json
+agent-browser session trace <sessionId> --json
+agent-browser session report <sessionId> --format markdown
+```
+
+See [docs/SESSIONS.md](docs/SESSIONS.md).
+
 ## Roadmap
 
 - Deeper Codra and Codra Deploy integrations
-- Persistent sessions for multi-step agent workflows
+- True cross-process browser state reuse for sessions
 - Accessibility-oriented snapshots
 - CI-friendly smoke check presets
 - Optional form inspection without credential automation

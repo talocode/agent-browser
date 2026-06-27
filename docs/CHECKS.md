@@ -9,7 +9,10 @@ agent-browser check https://example.com
 agent-browser check https://example.com --json
 agent-browser check https://example.com --screenshot-out ./deploy.png
 agent-browser check https://example.com --screenshot-out ./deploy.png --vision --json
+agent-browser check https://example.com --session <sessionId> --screenshot-out ./deploy.png --json
 ```
+
+When `--session` is provided, the smoke check appends a trace step and updates session metadata. Use `agent-browser session report` to export the full workflow report.
 
 ## What it checks
 
@@ -90,7 +93,8 @@ Input:
   "screenshotOut": "optional/path.png",
   "vision": false,
   "json": true,
-  "force": false
+  "force": false,
+  "sessionId": "optional-session-uuid"
 }
 ```
 

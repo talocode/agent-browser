@@ -60,3 +60,14 @@ Network and console capture avoid sensitive data by default:
 - screenshots only write to explicit output paths
 - existing screenshot files are not overwritten without `--force`
 - MCP screenshot responses avoid returning oversized base64 payloads
+
+## Sessions and trace storage
+
+Agent sessions (v0.2) store metadata and trace steps locally under `.agent-browser/`:
+
+- session ids must be UUIDs; filenames are validated
+- trace steps store counts and summaries, not full sensitive payloads
+- network evidence in traces inherits URL redaction from the provider layer
+- closed and expired sessions cannot be reused
+
+Sessions do not add credential automation, CAPTCHA bypass, or anti-detection behavior. See [SESSIONS.md](SESSIONS.md).

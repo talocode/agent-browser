@@ -29,7 +29,20 @@ The `agent-browser` binary exposes one-shot commands:
 - `network`
 - `mcp`
 
-Each single-URL command starts a session, performs one action, and closes the session. Commands validate URL safety before any browser work begins.
+Each single-URL command starts a browser provider session, performs one action, and closes the provider session. Commands validate URL safety before any browser work begins.
+
+### Agent sessions (v0.2)
+
+`src/sessions/` adds a separate **agent session** layer for multi-step workflows:
+
+- `SessionManager` — create, list, close, and validate agent sessions
+- local store — `.agent-browser/sessions.json`, `traces/`, `screenshots/`
+- trace append — every session-aware action records a step
+- reports — JSON and Markdown exports
+
+CLI `--session` and MCP `sessionId` route actions through `SessionManager` while still using `BrowserProvider` for browser I/O.
+
+v0.2 persists metadata and trace evidence. Live Playwright page state may not carry across separate CLI invocations; see [SESSIONS.md](SESSIONS.md).
 
 ## MCP server
 
@@ -43,8 +56,13 @@ Exposed tools:
 - `browser_console`
 - `browser_network`
 - `browser_check`
+- `browser_session_create`
+- `browser_session_list`
+- `browser_session_close`
+- `browser_session_trace`
+- `browser_session_report`
 
-MCP tools reuse the same provider and safety layers as the CLI.
+MCP tools reuse the same provider, session manager, and safety layers as the CLI.
 
 ### `browser_check`
 

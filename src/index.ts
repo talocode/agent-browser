@@ -12,3 +12,17 @@ export { startMcpServer, MCP_TOOL_NAMES } from "./server/mcp.js";
 export { handleBrowserCheck } from "./server/browser-check.js";
 export { evaluateActionDecision } from "./action/decisions.js";
 export { parseActionInputs, runBrowserCheckAction } from "./action.js";
+export {
+  SessionError,
+  SessionManager,
+  SessionStoreError,
+  appendTraceStep,
+  buildSessionReport,
+  formatReportJson,
+  formatReportMarkdown,
+  getTraceSteps,
+  type AgentBrowserSession,
+  type AgentBrowserTraceStep,
+  type ReportFormat,
+  type SessionReport,
+} from "./sessions/index.js";

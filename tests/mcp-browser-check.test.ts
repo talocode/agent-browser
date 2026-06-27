@@ -18,6 +18,11 @@ describe("MCP browser_check registration", () => {
       "browser_console",
       "browser_network",
       "browser_check",
+      "browser_session_create",
+      "browser_session_list",
+      "browser_session_close",
+      "browser_session_trace",
+      "browser_session_report",
     ]);
   });
 });

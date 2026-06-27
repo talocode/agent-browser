@@ -1,6 +1,15 @@
 import { Command } from "commander";
 import { PlaywrightBrowserProvider } from "./browser/playwright-provider.js";
 import { UnsafeUrlError } from "./browser/safety.js";
+import {
+  SessionError,
+  SessionManager,
+  buildSessionReport,
+  formatReportJson,
+  formatReportMarkdown,
+  getTraceSteps,
+  type ReportFormat,
+} from "./sessions/index.js";
 import { consoleForUrl } from "./tools/console.js";
 import { navigateToUrl } from "./tools/navigate.js";
 import { networkForUrl } from "./tools/network.js";
@@ -16,6 +25,10 @@ import {
 
 interface OutputOptions {
   json?: boolean;
+}
+
+interface SessionCommandOptions {
+  session?: string;
 }
 
 function printOutput(data: unknown, options: OutputOptions): void {
@@ -36,9 +49,11 @@ function printError(error: unknown, options: OutputOptions): never {
   const message =
     error instanceof UnsafeUrlError
       ? error.message
-      : error instanceof Error
+      : error instanceof SessionError
         ? error.message
-        : "Unknown error";
+        : error instanceof Error
+          ? error.message
+          : "Unknown error";
 
   if (options.json) {
     console.log(JSON.stringify({ ok: false, error: { code: "command_failed", message } }, null, 2));
@@ -70,67 +85,212 @@ program
   .description("Safe browser automation layer for AI agents")
   .option("--json", "Output machine-readable JSON");
 
+const sessionCmd = program
+  .command("session")
+  .description("Manage persistent local browser sessions and traces");
+
+sessionCmd
+  .command("create")
+  .option("--name <name>", "Optional session name")
+  .description("Create a new active session")
+  .action(async (cmd: { name?: string }) => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const manager = new SessionManager();
+      const session = await manager.createSession({ name: cmd.name });
+      printOutput(options.json ? { ok: true, session } : session, options);
+    } catch (error) {
+      printError(error, options);
+    }
+  });
+
+sessionCmd
+  .command("list")
+  .description("List local sessions")
+  .action(async () => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const manager = new SessionManager();
+      const sessions = await manager.listSessions();
+      printOutput(options.json ? { ok: true, sessions } : sessions, options);
+    } catch (error) {
+      printError(error, options);
+    }
+  });
+
+sessionCmd
+  .command("close")
+  .argument("<sessionId>", "Session id to close")
+  .description("Close an active session")
+  .action(async (sessionId: string) => {
+    const options = program.opts<OutputOptions>();
+    await withProvider(async () => {
+      const manager = new SessionManager();
+      const session = await manager.closeSession(sessionId);
+      return options.json ? { ok: true, session } : session;
+    }, options);
+  });
+
+sessionCmd
+  .command("trace")
+  .argument("<sessionId>", "Session id")
+  .description("Show trace steps for a session")
+  .action(async (sessionId: string) => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const manager = new SessionManager();
+      const session = await manager.getSession(sessionId);
+      if (!session) {
+        throw new SessionError("session_not_found", `Session not found: ${sessionId}`);
+      }
+      const steps = await getTraceSteps(sessionId);
+      printOutput(options.json ? { ok: true, session, steps } : { session, steps }, options);
+    } catch (error) {
+      printError(error, options);
+    }
+  });
+
+sessionCmd
+  .command("report")
+  .argument("<sessionId>", "Session id")
+  .option("--format <format>", "Report format: json or markdown", "json")
+  .description("Generate a session report")
+  .action(async (sessionId: string, cmd: { format: string }) => {
+    const options = program.opts<OutputOptions>();
+    try {
+      const format = cmd.format as ReportFormat;
+      if (format !== "json" && format !== "markdown") {
+        throw new Error(`Unsupported report format: ${cmd.format}`);
+      }
+      const manager = new SessionManager();
+      const session = await manager.getSession(sessionId);
+      if (!session) {
+        throw new SessionError("session_not_found", `Session not found: ${sessionId}`);
+      }
+      const report = await buildSessionReport(session);
+      if (format === "markdown") {
+        console.log(formatReportMarkdown(report));
+        return;
+      }
+      if (options.json) {
+        printOutput({ ok: true, report }, options);
+        return;
+      }
+      console.log(formatReportJson(report));
+    } catch (error) {
+      printError(error, options);
+    }
+  });
+
 program
   .command("navigate")
   .argument("<url>", "URL to open")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Navigate to a URL and return page metadata")
-  .action(async (url: string) => {
+  .action(async (url: string, cmd: SessionCommandOptions) => {
     const options = program.opts<OutputOptions>();
-    await withProvider((provider) => navigateToUrl(provider, url), options);
+    await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.navigate(provider, cmd.session, url);
+        return options.json ? { ok: true, result, sessionId: cmd.session } : result;
+      }
+      return navigateToUrl(provider, url);
+    }, options);
   });
 
 program
   .command("snapshot")
-  .argument("<url>", "URL to inspect")
+  .argument("[url]", "URL to inspect (optional when --session has lastUrl)")
   .option("--max-text-chars <n>", "Maximum visible text characters", "4000")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Capture a lightweight page snapshot")
-  .action(async (url: string, cmd: { maxTextChars: string }) => {
+  .action(async (url: string | undefined, cmd: { maxTextChars: string; session?: string }) => {
     const options = program.opts<OutputOptions>();
-    await withProvider(
-      (provider) =>
-        snapshotUrl(provider, url, {
+    await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.snapshot(provider, cmd.session, url, {
           maxTextChars: Number(cmd.maxTextChars),
-        }),
-      options,
-    );
+        });
+        return options.json ? { ok: true, result, sessionId: cmd.session } : result;
+      }
+      if (!url) {
+        throw new Error("URL is required when --session is not provided.");
+      }
+      return snapshotUrl(provider, url, { maxTextChars: Number(cmd.maxTextChars) });
+    }, options);
   });
 
 program
   .command("screenshot")
-  .argument("<url>", "URL to capture")
+  .argument("[url]", "URL to capture (optional when --session has lastUrl)")
   .option("--out <path>", "Write screenshot to file")
   .option("--force", "Overwrite existing output file")
   .option("--full-page", "Capture the full scrollable page")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Capture a screenshot of a page")
-  .action(async (url: string, cmd: { out?: string; force?: boolean; fullPage?: boolean }) => {
+  .action(async (url: string | undefined, cmd: { out?: string; force?: boolean; fullPage?: boolean; session?: string }) => {
     const options = program.opts<OutputOptions>();
-    await withProvider(
-      (provider) =>
-        screenshotUrl(provider, url, {
+    await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.screenshot(provider, cmd.session, url, {
           out: cmd.out,
           force: cmd.force,
           fullPage: cmd.fullPage,
-        }),
-      options,
-    );
+        });
+        return options.json ? { ok: true, result, sessionId: cmd.session } : result;
+      }
+      if (!url) {
+        throw new Error("URL is required when --session is not provided.");
+      }
+      return screenshotUrl(provider, url, {
+        out: cmd.out,
+        force: cmd.force,
+        fullPage: cmd.fullPage,
+      });
+    }, options);
   });
 
 program
   .command("console")
-  .argument("<url>", "URL to inspect")
+  .argument("[url]", "URL to inspect (optional when --session has lastUrl)")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Collect console messages during navigation")
-  .action(async (url: string) => {
+  .action(async (url: string | undefined, cmd: SessionCommandOptions) => {
     const options = program.opts<OutputOptions>();
-    await withProvider((provider) => consoleForUrl(provider, url), options);
+    await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.console(provider, cmd.session, url);
+        return options.json ? { ok: true, result, sessionId: cmd.session } : result;
+      }
+      if (!url) {
+        throw new Error("URL is required when --session is not provided.");
+      }
+      return consoleForUrl(provider, url);
+    }, options);
   });
 
 program
   .command("network")
-  .argument("<url>", "URL to inspect")
+  .argument("[url]", "URL to inspect (optional when --session has lastUrl)")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Collect network requests during navigation")
-  .action(async (url: string) => {
+  .action(async (url: string | undefined, cmd: SessionCommandOptions) => {
     const options = program.opts<OutputOptions>();
-    await withProvider((provider) => networkForUrl(provider, url), options);
+    await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.network(provider, cmd.session, url);
+        return options.json ? { ok: true, result, sessionId: cmd.session } : result;
+      }
+      if (!url) {
+        throw new Error("URL is required when --session is not provided.");
+      }
+      return networkForUrl(provider, url);
+    }, options);
   });
 
 program
@@ -139,10 +299,24 @@ program
   .option("--screenshot-out <path>", "Save screenshot to this path")
   .option("--force", "Overwrite existing screenshot output")
   .option("--vision", "Run optional vision inspect when screenshot is available")
+  .option("--session <sessionId>", "Record action in a persistent session")
   .description("Run a deploy-friendly smoke check against a URL")
-  .action(async (url: string, cmd: { screenshotOut?: string; force?: boolean; vision?: boolean }) => {
+  .action(async (url: string, cmd: { screenshotOut?: string; force?: boolean; vision?: boolean; session?: string }) => {
     const options = program.opts<OutputOptions>();
     await withProvider(async (provider) => {
+      if (cmd.session) {
+        const manager = new SessionManager();
+        const { result } = await manager.check(provider, cmd.session, url, {
+          screenshotOut: cmd.screenshotOut,
+          force: cmd.force,
+          vision: cmd.vision,
+        });
+        if (options.json) {
+          return { ok: true, result, sessionId: cmd.session };
+        }
+        return formatSmokeCheckHuman(result);
+      }
+
       const result = await runSmokeCheck(provider, url, {
         screenshotOut: cmd.screenshotOut,
         force: cmd.force,

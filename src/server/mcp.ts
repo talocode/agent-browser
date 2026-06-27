@@ -3,6 +3,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { PlaywrightBrowserProvider } from "../browser/playwright-provider.js";
 import { UnsafeUrlError } from "../browser/safety.js";
+import {
+  SessionError,
+  SessionManager,
+  buildSessionReport,
+  formatReportJson,
+  formatReportMarkdown,
+  getTraceSteps,
+} from "../sessions/index.js";
 import { consoleForUrl } from "../tools/console.js";
 import { navigateToUrl } from "../tools/navigate.js";
 import { networkForUrl } from "../tools/network.js";
@@ -17,6 +25,11 @@ export const MCP_TOOL_NAMES = [
   "browser_console",
   "browser_network",
   "browser_check",
+  "browser_session_create",
+  "browser_session_list",
+  "browser_session_close",
+  "browser_session_trace",
+  "browser_session_report",
 ] as const;
 
 const MAX_BASE64_SCREENSHOT_BYTES = 512 * 1024;
@@ -28,26 +41,133 @@ function toolError(message: string) {
   };
 }
 
+function formatError(error: unknown): string {
+  if (error instanceof UnsafeUrlError || error instanceof SessionError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Operation failed";
+}
+
 export async function startMcpServer(): Promise<void> {
   const provider = new PlaywrightBrowserProvider();
+  const sessionManager = new SessionManager();
   const server = new McpServer({
     name: "agent-browser",
-    version: "0.1.0",
+    version: "0.2.0",
   });
+
+  server.tool(
+    "browser_session_create",
+    "Create a persistent local browser session",
+    { name: z.string().optional() },
+    async ({ name }) => {
+      try {
+        const session = await sessionManager.createSession({ name });
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: true, session }) }],
+        };
+      } catch (error) {
+        return toolError(formatError(error));
+      }
+    },
+  );
+
+  server.tool("browser_session_list", "List persistent local browser sessions", {}, async () => {
+    try {
+      const sessions = await sessionManager.listSessions();
+      return {
+        content: [{ type: "text", text: JSON.stringify({ ok: true, sessions }) }],
+      };
+    } catch (error) {
+      return toolError(formatError(error));
+    }
+  });
+
+  server.tool(
+    "browser_session_close",
+    "Close a persistent local browser session",
+    { sessionId: z.string() },
+    async ({ sessionId }) => {
+      try {
+        const session = await sessionManager.closeSession(sessionId);
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: true, session, status: "closed" }) }],
+        };
+      } catch (error) {
+        return toolError(formatError(error));
+      }
+    },
+  );
+
+  server.tool(
+    "browser_session_trace",
+    "Return trace steps for a session",
+    { sessionId: z.string() },
+    async ({ sessionId }) => {
+      try {
+        const session = await sessionManager.getSession(sessionId);
+        if (!session) {
+          return toolError(`Session not found: ${sessionId}`);
+        }
+        const steps = await getTraceSteps(sessionId);
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: true, session, steps }) }],
+        };
+      } catch (error) {
+        return toolError(formatError(error));
+      }
+    },
+  );
+
+  server.tool(
+    "browser_session_report",
+    "Generate a JSON or Markdown session report",
+    {
+      sessionId: z.string(),
+      format: z.enum(["json", "markdown"]).optional().default("json"),
+    },
+    async ({ sessionId, format }) => {
+      try {
+        const session = await sessionManager.getSession(sessionId);
+        if (!session) {
+          return toolError(`Session not found: ${sessionId}`);
+        }
+        const report = await buildSessionReport(session);
+        if (format === "markdown") {
+          return {
+            content: [{ type: "text", text: formatReportMarkdown(report) }],
+          };
+        }
+        return {
+          content: [{ type: "text", text: formatReportJson(report) }],
+        };
+      } catch (error) {
+        return toolError(formatError(error));
+      }
+    },
+  );
 
   server.tool(
     "browser_navigate",
     "Navigate to a URL and return page metadata",
-    { url: z.string().url() },
-    async ({ url }) => {
+    { url: z.string().url(), sessionId: z.string().optional() },
+    async ({ url, sessionId }) => {
       try {
+        if (sessionId) {
+          const { result } = await sessionManager.navigate(provider, sessionId, url);
+          return {
+            content: [{ type: "text", text: JSON.stringify({ ok: true, result, sessionId, status: "passed" }) }],
+          };
+        }
         const result = await navigateToUrl(provider, url);
         return {
           content: [{ type: "text", text: JSON.stringify({ ok: true, result }) }],
         };
       } catch (error) {
-        const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Navigation failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );
@@ -56,18 +176,32 @@ export async function startMcpServer(): Promise<void> {
     "browser_snapshot",
     "Capture a lightweight page snapshot",
     {
-      url: z.string().url(),
+      url: z.string().url().optional(),
       maxTextChars: z.number().int().positive().optional(),
+      sessionId: z.string().optional(),
     },
-    async ({ url, maxTextChars }) => {
+    async ({ url, maxTextChars, sessionId }) => {
       try {
+        if (sessionId) {
+          const { result, step } = await sessionManager.snapshot(provider, sessionId, url, { maxTextChars });
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ ok: true, result, sessionId, status: step.status }),
+              },
+            ],
+          };
+        }
+        if (!url) {
+          return toolError("URL is required when sessionId is not provided.");
+        }
         const result = await snapshotUrl(provider, url, { maxTextChars });
         return {
           content: [{ type: "text", text: JSON.stringify({ ok: true, result }) }],
         };
       } catch (error) {
-        const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Snapshot failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );
@@ -76,12 +210,25 @@ export async function startMcpServer(): Promise<void> {
     "browser_screenshot",
     "Capture a screenshot. Returns base64 only when the image is small enough.",
     {
-      url: z.string().url(),
+      url: z.string().url().optional(),
       fullPage: z.boolean().optional(),
+      sessionId: z.string().optional(),
     },
-    async ({ url, fullPage }) => {
+    async ({ url, fullPage, sessionId }) => {
       try {
-        const result = await screenshotUrl(provider, url, { fullPage });
+        let result;
+        let status = "passed";
+        if (sessionId) {
+          const response = await sessionManager.screenshot(provider, sessionId, url, { fullPage });
+          result = response.result;
+          status = response.step.status;
+        } else {
+          if (!url) {
+            return toolError("URL is required when sessionId is not provided.");
+          }
+          result = await screenshotUrl(provider, url, { fullPage });
+        }
+
         if (result.base64) {
           const sizeBytes = Buffer.byteLength(result.base64, "base64");
           if (sizeBytes > MAX_BASE64_SCREENSHOT_BYTES) {
@@ -93,9 +240,12 @@ export async function startMcpServer(): Promise<void> {
                     ok: true,
                     result: {
                       mimeType: result.mimeType,
+                      path: result.path,
                       message: "Screenshot too large for inline base64 response",
                       sizeBytes,
                     },
+                    sessionId,
+                    status,
                   }),
                 },
               ],
@@ -104,11 +254,10 @@ export async function startMcpServer(): Promise<void> {
         }
 
         return {
-          content: [{ type: "text", text: JSON.stringify({ ok: true, result }) }],
+          content: [{ type: "text", text: JSON.stringify({ ok: true, result, sessionId, status }) }],
         };
       } catch (error) {
-        const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Screenshot failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );
@@ -116,16 +265,29 @@ export async function startMcpServer(): Promise<void> {
   server.tool(
     "browser_console",
     "Collect console messages during navigation",
-    { url: z.string().url() },
-    async ({ url }) => {
+    { url: z.string().url().optional(), sessionId: z.string().optional() },
+    async ({ url, sessionId }) => {
       try {
+        if (sessionId) {
+          const { result, step } = await sessionManager.console(provider, sessionId, url);
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ ok: true, result, sessionId, status: step.status }),
+              },
+            ],
+          };
+        }
+        if (!url) {
+          return toolError("URL is required when sessionId is not provided.");
+        }
         const result = await consoleForUrl(provider, url);
         return {
           content: [{ type: "text", text: JSON.stringify({ ok: true, result }) }],
         };
       } catch (error) {
-        const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Console capture failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );
@@ -133,16 +295,29 @@ export async function startMcpServer(): Promise<void> {
   server.tool(
     "browser_network",
     "Collect network requests during navigation",
-    { url: z.string().url() },
-    async ({ url }) => {
+    { url: z.string().url().optional(), sessionId: z.string().optional() },
+    async ({ url, sessionId }) => {
       try {
+        if (sessionId) {
+          const { result, step } = await sessionManager.network(provider, sessionId, url);
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ ok: true, result, sessionId, status: step.status }),
+              },
+            ],
+          };
+        }
+        if (!url) {
+          return toolError("URL is required when sessionId is not provided.");
+        }
         const result = await networkForUrl(provider, url);
         return {
           content: [{ type: "text", text: JSON.stringify({ ok: true, result }) }],
         };
       } catch (error) {
-        const message = error instanceof UnsafeUrlError ? error.message : error instanceof Error ? error.message : "Network capture failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );
@@ -156,9 +331,26 @@ export async function startMcpServer(): Promise<void> {
       vision: z.boolean().optional().default(false),
       json: z.boolean().optional().default(true),
       force: z.boolean().optional().default(false),
+      sessionId: z.string().optional(),
     },
-    async ({ url, screenshotOut, vision, force }) => {
+    async ({ url, screenshotOut, vision, force, sessionId }) => {
       try {
+        if (sessionId) {
+          const { result, step } = await sessionManager.check(provider, sessionId, url, {
+            screenshotOut,
+            vision,
+            force,
+          });
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ ok: true, result, sessionId, status: step.status }),
+              },
+            ],
+          };
+        }
+
         const response = await handleBrowserCheck(provider, {
           url,
           screenshotOut,
@@ -170,13 +362,7 @@ export async function startMcpServer(): Promise<void> {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
       } catch (error) {
-        const message =
-          error instanceof UnsafeUrlError
-            ? error.message
-            : error instanceof Error
-              ? error.message
-              : "Smoke check failed";
-        return toolError(message);
+        return toolError(formatError(error));
       }
     },
   );

@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "agent-browser": {
+      "command": "agent-browser",
+      "args": ["mcp"],
+      "env": {}
+    }
+  },
+  "sessionWorkflow": {
+    "create": { "tool": "browser_session_create", "arguments": { "name": "mcp-deploy-check" } },
+    "check": {
+      "tool": "browser_check",
+      "arguments": {
+        "url": "https://example.com",
+        "sessionId": "<session-id-from-create>",
+        "screenshotOut": "./deploy.png"
+      }
+    },
+    "trace": { "tool": "browser_session_trace", "arguments": { "sessionId": "<session-id-from-create>" } },
+    "report": {
+      "tool": "browser_session_report",
+      "arguments": { "sessionId": "<session-id-from-create>", "format": "json" }
+    },
+    "close": { "tool": "browser_session_close", "arguments": { "sessionId": "<session-id-from-create>" } }
+  }
+}

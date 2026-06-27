@@ -21,3 +21,6 @@ python/**/build/
 # GitHub Action generated artifacts
 agent-browser-screenshot.png
 agent-browser-check-report.json
+
+# Local session/trace runtime artifacts
+.agent-browser/
