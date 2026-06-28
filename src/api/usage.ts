@@ -65,17 +65,26 @@ async function appendLocalUsageEvent(event: HostedUsageEvent, storageRoot?: stri
   await writeFile(logPath, JSON.stringify(events, null, 2), "utf8");
 }
 
-async function forwardToStacklane(
+export interface ChargeResult {
+  ok: boolean
+  remainingCredits?: number
+  requiredCredits?: number
+  availableCredits?: number
+}
+
+async function chargeTalocodeCloud(
   event: HostedUsageEvent,
   baseUrl: string,
   apiKey: string,
-): Promise<void> {
-  const url = `${baseUrl.replace(/\/$/, "")}/api/v1/usage/events`;
-  const body = {
+): Promise<ChargeResult> {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/v1/cloud/usage/charge`;
+  const body: Record<string, unknown> = {
     product: event.product,
     action: event.action,
-    units: event.units,
-    metadata: event.metadata,
+    metadata: {
+      ...event.metadata,
+      units: event.units,
+    },
   };
 
   const response = await fetch(url, {
@@ -87,12 +96,27 @@ async function forwardToStacklane(
     body: JSON.stringify(body),
   });
 
-  if (!response.ok) {
-    throw new Error(`Stacklane usage forward failed with status ${response.status}`);
+  const data = (await response.json()) as Record<string, unknown>;
+
+  if (response.status === 402) {
+    return {
+      ok: false,
+      requiredCredits: data.required as number,
+      availableCredits: data.available as number,
+    };
   }
+
+  if (!response.ok) {
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    remainingCredits: data.remainingCredits as number,
+  };
 }
 
-export async function recordHostedUsageEvent(input: RecordHostedUsageInput): Promise<void> {
+export async function recordHostedUsageEvent(input: RecordHostedUsageInput): Promise<ChargeResult> {
   const event: HostedUsageEvent = {
     product: input.product,
     action: input.action,
@@ -106,13 +130,13 @@ export async function recordHostedUsageEvent(input: RecordHostedUsageInput): Pro
   const baseUrl = input.stacklaneBaseUrl;
   const apiKey = input.stacklaneApiKey;
   if (!baseUrl || !apiKey) {
-    return;
+    return { ok: true };
   }
 
   try {
-    await forwardToStacklane(event, baseUrl, apiKey);
+    return await chargeTalocodeCloud(event, baseUrl, apiKey);
   } catch {
-    // Best-effort forward; never fail the browser API request.
+    return { ok: false };
   }
 }
 

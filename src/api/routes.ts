@@ -15,6 +15,7 @@ import { screenshotUrl } from "../tools/screenshot.js";
 import { requireAuth, getConfigStatus } from "./auth.js";
 import { ApiRouteError, jsonResponse, sendError, sendRouteError, sendSuccess } from "./errors.js";
 import { recordHostedUsageEvent } from "./usage.js";
+import type { ChargeResult } from "./usage.js";
 import type { RouteContext } from "./types.js";
 
 const checkBodySchema = z.object({
@@ -70,8 +71,8 @@ async function recordUsage(
   ctx: RouteContext,
   action: Parameters<typeof recordHostedUsageEvent>[0]["action"],
   metadata?: Record<string, unknown>,
-): Promise<void> {
-  await recordHostedUsageEvent({
+): Promise<ChargeResult> {
+  return recordHostedUsageEvent({
     product: "agent_browser",
     action,
     units: 1,
@@ -138,11 +139,15 @@ export async function handleBrowserCheck(
           vision: body.vision,
         });
 
-        await recordUsage(ctx, "agent_browser.check", {
+        const charge = await recordUsage(ctx, "agent_browser.check", {
           url: result.url,
           status: result.status,
           sessionId: body.sessionId,
         });
+        if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+          sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+          return;
+        }
 
         sendSuccess(res, {
           result: sanitizeCheckResultForApi(result, tempDir),
@@ -158,10 +163,14 @@ export async function handleBrowserCheck(
         vision: body.vision,
       });
 
-      await recordUsage(ctx, "agent_browser.check", {
+      const charge = await recordUsage(ctx, "agent_browser.check", {
         url: result.url,
         status: result.status,
       });
+      if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+        sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+        return;
+      }
 
       sendSuccess(res, { result: sanitizeCheckResultForApi(result, tempDir) });
     } finally {
@@ -185,10 +194,14 @@ export async function handleBrowserScreenshot(
       const manager = new SessionManager(ctx.storageRoot);
       const { result, step } = await manager.screenshot(provider, body.sessionId, body.url);
 
-      await recordUsage(ctx, "agent_browser.screenshot", {
+      const charge = await recordUsage(ctx, "agent_browser.screenshot", {
         url: body.url,
         sessionId: body.sessionId,
       });
+      if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+        sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+        return;
+      }
 
       sendSuccess(res, {
         result,
@@ -200,7 +213,11 @@ export async function handleBrowserScreenshot(
 
     const result = await screenshotUrl(provider, body.url);
 
-    await recordUsage(ctx, "agent_browser.screenshot", { url: body.url });
+    const charge = await recordUsage(ctx, "agent_browser.screenshot", { url: body.url });
+    if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+      sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+      return;
+    }
 
     sendSuccess(res, { result });
   });
@@ -216,10 +233,14 @@ export async function handleSessionCreate(
   const manager = new SessionManager(ctx.storageRoot);
   const session = await manager.createSession({ name: body.name });
 
-  await recordUsage(ctx, "agent_browser.session.create", {
+  const charge = await recordUsage(ctx, "agent_browser.session.create", {
     sessionId: session.id,
     name: body.name,
   });
+  if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+    sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+    return;
+  }
 
   sendSuccess(res, { session }, 201);
 }
@@ -266,10 +287,14 @@ export async function handleSessionReport(
 
   const report = await buildSessionReport(session, ctx.storageRoot);
 
-  await recordUsage(ctx, "agent_browser.session.report", {
+  const charge = await recordUsage(ctx, "agent_browser.session.report", {
     sessionId,
     format: formatParam,
   });
+  if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+    sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+    return;
+  }
 
   if (formatParam === "markdown") {
     sendSuccess(res, {
@@ -297,7 +322,11 @@ export async function handleSessionClose(
   const manager = new SessionManager(ctx.storageRoot);
   const session = await manager.closeSession(sessionId);
 
-  await recordUsage(ctx, "agent_browser.session.close", { sessionId });
+  const charge = await recordUsage(ctx, "agent_browser.session.close", { sessionId });
+  if (!charge.ok && ctx.config.stacklaneBaseUrl) {
+    sendError(res, "insufficient_credits", "Insufficient credits. Top up your Talocode Cloud wallet.", 402);
+    return;
+  }
 
   sendSuccess(res, { session });
 }
