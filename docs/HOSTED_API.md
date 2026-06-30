@@ -41,7 +41,8 @@ curl -s \
 | `AGENT_BROWSER_API_PORT` | `7340` | Bind port |
 | `AGENT_BROWSER_API_MODE` | `local` | `local` or `production` |
 | `AGENT_BROWSER_API_AUTH_DISABLED` | — | Set to `1` to disable auth in development/test only |
-| `STACKLANE_BASE_URL` | — | Optional Stacklane base URL for usage forwarding |
+| `TALOCODE_BASE_URL` | — | Canonical Talocode Cloud base URL for usage forwarding |
+| `STACKLANE_BASE_URL` | — | Legacy alias for `TALOCODE_BASE_URL` (falls back if not set) |
 | `STACKLANE_API_KEY` | — | Optional Stacklane API key for usage forwarding |
 | `AGENT_BROWSER_ALLOW_LOCALHOST` | — | Allow localhost targets (same as CLI) |
 | `AGENT_BROWSER_STORAGE_ROOT` | cwd | Root for `.agent-browser/` session and usage data |
@@ -161,7 +162,7 @@ Every mutating endpoint records a usage event via `recordHostedUsageEvent`:
 
 Events append to `.agent-browser/hosted-usage.json` under the storage root.
 
-When `STACKLANE_BASE_URL` and `STACKLANE_API_KEY` are set, events are best-effort forwarded to `POST /api/v1/usage/events`. Forwarding failures do not fail browser API requests. Usage metadata never contains raw API keys or sensitive request bodies.
+When `TALOCODE_BASE_URL` (or legacy `STACKLANE_BASE_URL`) and `STACKLANE_API_KEY` are set, events are best-effort forwarded to `POST ${TALOCODE_BASE_URL}/api/v1/cloud/usage/events`. Forwarding failures do not fail browser API requests. Usage metadata never contains raw API keys or sensitive request bodies.
 
 ## Safety
 

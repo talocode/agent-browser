@@ -41,7 +41,7 @@ export function loadApiConfig(overrides: Partial<ApiConfig> = {}): ApiConfig {
     authDisabled:
       overrides.authDisabled ??
       (authDisabledRequested && isDevOrTestMode(overrides.mode ?? mode)),
-    stacklaneBaseUrl: overrides.stacklaneBaseUrl ?? process.env.STACKLANE_BASE_URL,
+    stacklaneBaseUrl: overrides.stacklaneBaseUrl ?? process.env.TALOCODE_BASE_URL ?? process.env.STACKLANE_BASE_URL,
     stacklaneApiKey: overrides.stacklaneApiKey ?? process.env.STACKLANE_API_KEY,
     version: overrides.version ?? readPackageVersion(),
   };
